@@ -1,4 +1,3 @@
-// Hash table Implementation
 
 #include <iostream>
 #include <vector>
@@ -6,171 +5,210 @@
 
 using namespace std;
 
-template <typename Object>
-class ItemNotFoundException : public exception
-{
+//exception
+class BadIterator : public std::exception {
 public:
-    const char *what() const throw()
-    {
-        return "Item not found in hash table.";
+    const char* what() const throw() {
+        return "Invalid iterator";
     }
 };
 
+// this incomplete declaration is for the friend class
 template <typename Object>
-class DuplicateItemException : public exception
+class linkedList;
+
+template <typename Object>
+class linkedListItr;
+
+// Node class
+template <typename Object>
+class linkedListNode
 {
-public:
-    const char *what() const throw()
-    {
-        return "Duplicate item found in hash table.";
-    }
+    linkedListNode(const Object &theElement = Object(), linkedListNode *n = NULL) : element(theElement), next(n) {}
+    Object element;
+    linkedListNode *next;
+    friend class linkedList<Object>;
+    friend class linkedListItr<Object>;
 };
 
-
-//*********************************************************************************************
+// Iterator classs
 template <typename Object>
-class HashTable
+class linkedListItr
 {
 public:
-    HashTable();
-    void makeEmpty();
-    Object *find(const Object &x) const;
-    void insert(const Object &x);
-    void remove(const Object &x);
-
-    enum EntryType
+    linkedListItr() : current(NULL) {}
+    bool isValid() const
     {
-        ACTIVE,
-        EMPTY,
-        DELETED
-    };
+        return current != NULL;
+    }
+
+    void advance()
+    {
+        if (isValid())
+            current = current->next;
+    }
+
+    const Object &retrieve() const
+    {
+        if (!isValid())
+            throw BadIterator();
+        return current->element;
+    }
 
 private:
-    struct HashEntry
-    {
-        Object element;
-        EntryType info;
-        HashEntry(const Object &e = Object(), EntryType i = EMPTY)
-            : element(e), info(i) {}
-    };
-    vector<HashEntry> array;
-    int occupied;
-    bool isActive(int currentPos) const;
-    int findPos(const Object &x) const;
-    void rehash();
+    linkedListNode<Object> *current;
+    linkedListItr(linkedListNode<Object> *theNode) : current(theNode) {}
+
+    friend class linkedList<Object>;
 };
-template <typename Object>
-unsigned int hash(const Object &key);
 
-// constructor
-
+// linked list class
 template <typename Object>
-HashTable<Object>::HashTable() : array(nextPrime(101))
+class linkedList
 {
-    makeEmpty();
+public:
+    linkedList();
+    linkedList(const linkedList &rhs);
+    ~linkedList();
+
+    bool isEmpty() const;
+    void makeEmpty();
+    linkedListItr<Object> zeroth() const;
+    linkedListItr<Object> first() const;
+    void insert(const Object &x, const linkedListItr<Object> &p);
+    linkedListItr<Object> find(const Object &x) const;
+    linkedListItr<Object> findPrevious(const Object &x) const;
+    void remove(const Object &x);
+    const linkedList &operator=(const linkedList &rhs);
+
+private:
+    linkedListNode<Object> *header;
+};
+
+template <typename Object>
+linkedList<Object>::linkedList()
+{
+    header = new linkedListNode<Object>;
 }
 
 template <typename Object>
-void HashTable<Object>::makeEmpty()
+bool linkedList<Object>::isEmpty() const
 {
-    occupied = 0;
-    for (int i = 0; i < array.size(); i++)
-    {
-        array[i].info = EMPTY;
-    }
+    return header->next == NULL;
 }
 
 template <typename Object>
-Object *HashTable<Object>::find(const Object &x) const
+linkedListItr<Object> linkedList<Object>::zeroth() const
 {
-    int currentPos = findPos(x);
-    if (isActive(currentPos))
-        return *array[currentPos].element;
+    return linkedListItr<Object>(header);
+}
+
+template <typename Object>
+linkedListItr<Object> linkedList<Object>::first() const
+{
+    return linkedListItr<Object>(header->next);
+}
+
+template <typename Object>
+void printList(const linkedList<Object> &theList)
+{
+    if (theList.isEmpty())
+        cout << "Empty List:" << endl;
     else
-        return nullptr;
-}
-
-template <typename Object>
-bool HashTable<Object>::isActive(int currentPos) const
-{
-    return array[currentPos].info == ACTIVE;
-}
-
-template <typename Object>
-void HashTable<Object>::remove(const Object &x)
-{
-    int currentPos = findPos(x);
-    if (isActive(currentPos))
     {
-        array[currentPos].info = DELETED;
-    }
-    else
-    {
-        throw ItemNotFoundException();
-    }
-}
-
-template <typename Object>
-void HashTable<Object>::insert(const Object &x)
-{
-    int currentPos = findPos(x);
-    if (isActive(currentPos))
-    {
-        throw DuplicateItemException();
-    }
-
-    array[currentPos] = HashEntry(x, ACTIVE);
-    if (++occupied > array.size() / 2)
-    {
-        rehash();
-    }
-}
-
-template <typename Object>
-void HashTable<Object>::rehash()
-{
-    vector<HashEntry> oldArray = array;
-    array.resize(nextPrime(2 * oldArray.size()));
-    for (int j = 0; j < array.size(); j++)
-    {
-        array[j].info = EMPTY;
-    }
-    makeEmpty();
-    for (int i = 0; j < oldArray.size(); i++)
-    {
-        if (oldArray[i].info == ACTIVE)
+        linkedListItr<Object> itr = theList.first();
+        for (; itr.isValid(); itr.advance())
         {
-            insert(oldArray[i].element);
+            cout << itr.retrieve() << " ";
         }
     }
+    cout << endl;
 }
 
 template <typename Object>
-int HashTable<Object>::findPos(const Object &x) const
+linkedListItr<Object> linkedList<Object>::find(const Object &x) const
 {
-    int i = 0;
-    int currentPos = hash(x) & array.size();
-    while (array[currentPos].info != EMPTY && array[currentPos].element != x)
-    {
-        currentPos += 2 * ++i - 1;
-        if (currentPos >= array.size())
-        {
-            currentPos -= array.size();
-        }
-    }
-    return currentPos;
+
+    linkedListNode<Object> *p = header->next;
+
+    while (p != NULL && p->element != x)
+        p = p->next;
+
+    return linkedListItr<Object>(p);
 }
 
-// genertic hash function
 template <typename Object>
-unsigned int hash(const Object &key)
+void linkedList<Object>::remove(const Object &x)
 {
-    unsigned int hashVal = 0;
-    const char *keyp = reinterpret_cast<const char *>(&key);
-    for (size_t i = 0; i < sizeof(Object); i++)
-    {
-        hashVal = 37 * hashVal + keyp[i];
-    }
 
-    return hashVal;
+    linkedListNode<Object> *p = findPrevious(x).current;
+
+    if (p->next != NULL)
+    {
+
+        linkedListNode<Object> *oldNode = p->next;
+        p->next = p->next->next; // Bypass
+        delete oldNode;
+    }
+}
+
+template <typename Object>
+linkedListItr<Object> linkedList<Object>::findPrevious(const Object &x) const
+{
+
+    linkedListNode<Object> *p = header;
+
+    while (p->next != NULL && p->next->element != x)
+        p = p->next;
+
+    return linkedListItr<Object>(p);
+}
+
+template <typename Object>
+
+void linkedList<Object>::insert(const Object &x, const linkedListItr<Object> &p)
+{
+
+    if (p.current != NULL)
+        p.current->next = new linkedListNode<Object>(x, p.current->next);
+}
+
+// Make the list logically empty.
+template <typename Object>
+void linkedList<Object>::makeEmpty()
+{
+    while (!isEmpty())
+        remove(first().retrieve());
+}
+
+// Destructor.
+template <typename Object>
+linkedList<Object>::~linkedList()
+{
+    makeEmpty();
+    delete header;
+}
+
+template <typename Object>
+linkedList<Object>::linkedList(const linkedList<Object> &rhs)
+{
+    header = new linkedListNode<Object>;
+    *this = rhs;
+}
+
+// Deep copy of linked lists.
+template <typename Object>
+const linkedList<Object> &
+linkedList<Object>::operator=(const linkedList<Object> &rhs)
+{
+
+    if (this != &rhs)
+    {
+        makeEmpty();
+        linkedListItr<Object> ritr = rhs.first();
+        linkedListItr<Object> itr = zeroth();
+        for (; ritr.isValid(); ritr.advance(), itr.advance())
+            insert(ritr.retrieve(), itr);
+    }
+    return *this;
 }
