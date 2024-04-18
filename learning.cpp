@@ -5,60 +5,25 @@
 #include <vector>
 using namespace std;
 
-class BST {
-private:
-    struct Node{
-        int data;
-        Node* left;
-        Node* right;
-    };
+void insertionSort(int arr[], int n)
+{
+    int i, key, j;
 
-    Node* root = nullptr;
+    for (i = 1; i < n; i++)
 
+    {
+        key = arr[i];
 
+        j = i - 1;
+        /* Move elements of arr[0..i-1], that are  greater than key, to one position ahead of their current position */
+        while (j >= 0 && arr[j] > key)
 
-public:
-    void add(int value){
-        Node* newNode = new Node;
-        newNode->data = value;
-        newNode->left = nullptr;
-        newNode->right= nullptr;
-
-        if (root=nullptr)
         {
-            root = newNode;
-            return;
+            arr[j + 1] = arr[j];
+
+            j = j - 1;
         }
 
-        Node* temp = root;
-        Node* parent = nullptr;
-        while (temp!=nullptr)
-        {
-            parent = temp;
-            if (value<=temp->data)
-            {
-                temp = temp->left;
-            }
-
-            else
-            {
-                temp=temp->right;
-            }
-            
-            
-        }
-
-        if (value<=parent->data)
-        {
-            parent->left = newNode;
-        }
-
-        else
-        {
-            parent->right = newNode;
-        }
-        
+        arr[j + 1] = key;
     }
-
-
-};
+}
