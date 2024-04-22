@@ -1,29 +1,58 @@
-#include <iostream>
-#include <list>
-#include <cstring>
-#include <queue>
+#include <iostream> 
 #include <vector>
+#include <stack>
+#include <queue> 
+#include <map>
+#include <set>
+#include <unordered_map>
+#include <fstream>
 using namespace std;
 
-void insertionSort(int arr[], int n)
-{
-    int i, key, j;
 
-    for (i = 1; i < n; i++)
+class Graph {
+private:
+    unordered_map<int, vector<int>> adjList;
 
-    {
-        key = arr[i];
-
-        j = i - 1;
-        /* Move elements of arr[0..i-1], that are  greater than key, to one position ahead of their current position */
-        while (j >= 0 && arr[j] > key)
-
-        {
-            arr[j + 1] = arr[j];
-
-            j = j - 1;
-        }
-
-        arr[j + 1] = key;
+public:
+    void addEdge(int src, int dest) {
+        adjList[src].push_back(dest);
+        adjList[dest].push_back(src);
     }
+
+    void printGraph() {
+        for (auto it = adjList.begin(); it != adjList.end(); it++)
+        {
+            cout<< "Vertex: " << it->first << " -> "; 
+            for (int neighbor : it->second)
+            {
+                cout << neighbor << " ";
+            }
+            cout << endl;
+            
+        }
+        
+    }
+
+    void addNode(int node) {
+        //inserting a new node with an empty vector as its value
+        adjList.insert({node, vector<int>()});
+    }
+
+    bool findNode(int node) {
+        return adjList.find(node) != adjList.end();
+    }
+
+};
+
+
+int main(int argc, char const *argv[])
+{
+    Graph g;
+    g.addEdge(0, 1);
+    g.addEdge(0, 2);
+    g.addEdge(1, 2);
+    g.addEdge(2, 3);
+    g.printGraph();
+    
+    return 0;
 }
